@@ -2,10 +2,16 @@ import yaml
 from pathlib import Path
 import filePDF
 import os
-import pdf_reader
-import pandas as pd
+from datetime import datetime, date, time
+import msSQL
 import pyodbc
-import time
+import pandas as pd
+
+# Connection string
+connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
+						 "SERVER=DESKTOP-I46RHJS;"
+						 "DATABASE=Menus;"
+						 "Trusted_Connection=yes")
 
 # Read configuration file
 with open("config.yaml", 'r') as stream:
@@ -29,17 +35,24 @@ for path in pathlist:
 	file_name = os.path.splitext(os.path.basename(path))[0]
 	# Download pdf into object
 	file = filePDF.PdfFile(path_in_str)
-	start_time = time.time()
+	start_time = datetime.now()
 	# Start work with files
 	try:
 		items = file.get_items()
-		print("Pdf file %s downloaded for %s seconds" % (file_name, str(time.time() - start_time)))
+		print("Pdf file %s downloaded for %s seconds" % (file_name, str((datetime.now() - start_time).total_seconds())))
 		print("File contain %s of elements" % len(items))
 
 		if len(items) < min_cat_count + 2 * min_dish_count:
 			print("Pdf file %s is not text" % file_name)
+			cursor = connStr.cursor()
+			time_log = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+			query = "INSERT INTO dbo.pdf_convert_log([time],[file_path],[file_name],[is_picture],[file_size],[page_count],[download_file_time],[is_parsed]) values 			(convert(smalldatetime, '%s', 121), '%s', '%s', %s, %s, %s, %s, %s)" % (time_log, path_in_str, file_name, 1, 100, 1, 0.5, 0)
+			cursor.execute(query)
+			connStr.commit()
+			cursor.close()
+			connStr.close()
 			continue
-	except  Exception as e:
+	except Exception as e:
 		print("Exeption. Pdf file %s is not downloaded" % file_name)
 
 
