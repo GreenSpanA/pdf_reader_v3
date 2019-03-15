@@ -5,13 +5,12 @@ Converts PDF text content (though not images containing text) to plain text, htm
 """
 import argparse
 import logging
-import six
 import sys
-import pdfminer.settings
-pdfminer.settings.STRICT = False
-import pdfminer.high_level
-import pdfminer.layout
-from pdfminer.image import ImageWriter
+import pdfminer3.settings
+pdfminer3.settings.STRICT = False
+import pdfminer3.high_level
+import pdfminer3.layout
+from pdfminer3.image import ImageWriter
 
 
 def extract_text(files=[], outfile='-',
@@ -30,7 +29,7 @@ def extract_text(files=[], outfile='-',
     # If any LAParams group arguments were passed, create an LAParams object and
     # populate with given args. Otherwise, set it to None.
     if not no_laparams:
-        laparams = pdfminer.layout.LAParams()
+        laparams = pdfminer3.layout.LAParams()
         for param in ("all_texts", "detect_vertical", "word_margin", "char_margin", "line_margin", "boxes_flow"):
             paramv = locals().get(param, None)
             if paramv is not None:
@@ -60,7 +59,7 @@ def extract_text(files=[], outfile='-',
 
     for fname in files:
         with open(fname, "rb") as fp:
-            pdfminer.high_level.extract_text_to_fp(fp, **locals())
+            pdfminer3.high_level.extract_text_to_fp(fp, **locals())
     return outfp
 
 
@@ -100,16 +99,13 @@ def main(args=None):
     A = P.parse_args(args=args)
 
     if A.page_numbers:
-        A.page_numbers = set([x-1 for x in A.page_numbers])
+        A.page_numbers = {x-1 for x in A.page_numbers}
     if A.pagenos:
-        A.page_numbers = set([int(x)-1 for x in A.pagenos.split(",")])
+        A.page_numbers = {int(x)-1 for x in A.pagenos.split(",")}
 
     imagewriter = None
     if A.output_dir:
         imagewriter = ImageWriter(A.output_dir)
-
-    if six.PY2 and sys.stdin.encoding:
-        A.password = A.password.decode(sys.stdin.encoding)
 
     if A.output_type == "text" and A.outfile != "-":
         for override, alttype in (  (".htm",  "html"),

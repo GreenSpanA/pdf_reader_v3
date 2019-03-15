@@ -8,25 +8,22 @@
 #    -i objid : object id
 #
 import sys, os.path, re, logging
-from pdfminer.psparser import PSKeyword, PSLiteral, LIT
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument, PDFNoOutlines
-from pdfminer.pdftypes import PDFObjectNotFound, PDFValueError
-from pdfminer.pdftypes import PDFStream, PDFObjRef, resolve1, stream_value
-from pdfminer.pdfpage import PDFPage
-from pdfminer.utils import isnumber
+from pdfminer3.psparser import PSKeyword, PSLiteral, LIT
+from pdfminer3.pdfparser import PDFParser
+from pdfminer3.pdfdocument import PDFDocument, PDFNoOutlines
+from pdfminer3.pdftypes import PDFObjectNotFound, PDFValueError
+from pdfminer3.pdftypes import PDFStream, PDFObjRef, resolve1, stream_value
+from pdfminer3.pdfpage import PDFPage
+from pdfminer3.utils import isnumber
 
 
 ESC_PAT = re.compile(r'[\000-\037&<>()"\042\047\134\177-\377]')
 def e(s):
-    if six.PY3 and isinstance(s,six.binary_type):
-        s=str(s,'latin-1')
+    if isinstance(s, bytes):
+        s = str(s,'latin-1')
     return ESC_PAT.sub(lambda m:'&#%d;' % ord(m.group(0)), s)
 
-import six # Python 2+3 compatibility
 
-
-# dumpxml
 def dumpxml(out, obj, codec=None):
     if obj is None:
         out.write('<null />')
@@ -34,7 +31,7 @@ def dumpxml(out, obj, codec=None):
 
     if isinstance(obj, dict):
         out.write('<dict size="%d">\n' % len(obj))
-        for (k,v) in six.iteritems(obj):
+        for (k,v) in obj.items():
             out.write('<key>%s</key>\n' % k)
             out.write('<value>')
             dumpxml(out, v)
@@ -50,7 +47,7 @@ def dumpxml(out, obj, codec=None):
         out.write('</list>')
         return
 
-    if isinstance(obj, (six.string_types, six.binary_type)):
+    if isinstance(obj, (str, bytes)):
         out.write('<string size="%d">%s</string>' % (len(obj), e(obj)))
         return
 
@@ -110,7 +107,7 @@ def dumpallobjs(out, doc, codec=None):
                 dumpxml(out, obj, codec=codec)
                 out.write('\n</object>\n\n')
             except PDFObjectNotFound as e:
-                print >>sys.stderr, 'not found: %r' % e
+                print('not found: %r' % e, file=sys.stderr)
     dumptrailers(out, doc)
     out.write('</pdf>')
     return
@@ -184,7 +181,7 @@ def extractembedded(outfp, fname, objids, pagenos, password='',
         path = os.path.join(extractdir, filename)
         if os.path.exists(path):
             raise IOError('file exists: %r' % path)
-        print >>sys.stderr, 'extracting: %r' % path
+        print('extracting: %r' % path, file=sys.stderr)
         out = file(path, 'wb')
         out.write(fileobj.get_data())
         out.close()
@@ -234,7 +231,7 @@ def dumppdf(outfp, fname, objids, pagenos, password='',
 def main(argv):
     import getopt
     def usage():
-        print ('usage: %s [-d] [-a] [-p pageid] [-P password] [-r|-b|-t] [-T] [-E directory] [-i objid] file ...' % argv[0])
+        print(('usage: %s [-d] [-a] [-p pageid] [-P password] [-r|-b|-t] [-T] [-E directory] [-i objid] file ...' % argv[0]))
         return 100
     try:
         (opts, args) = getopt.getopt(argv[1:], 'dap:P:rbtTE:i:o:')
@@ -263,9 +260,6 @@ def main(argv):
         elif k == '-E':
             extractdir = v
             proc = extractembedded
-
-    if six.PY2 and sys.stdin.encoding:
-        password = password.decode(sys.stdin.encoding)
 
     for fname in args:
         proc(outfp, fname, objids, pagenos, password=password,

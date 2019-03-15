@@ -344,7 +344,66 @@ def delete_empty_rows(df, column_name="name"):
     return df
 
 
-def mean_char(a,b):
+def mean_char(a, b):
     x = a/len(b)
     return round(float(x), 3)
+
+################################
+
+
+def find_cat_h(heights, items, min_cat_count, min_dish_count):
+    for h in reversed(heights[heights['count'] >= min_cat_count].index.values):
+        cat_h = h
+        tmp_items = items[items['height'].between(0.99 * cat_h, 1.01 * cat_h)]
+        tmp_items = tmp_items[tmp_items['name'].apply(lambda x: len(x)) > 3]
+        if len(tmp_items) < min_cat_count:
+            continue
+        # Split cat at pages
+        word_count = 0
+        for p in tmp_items['page_num'].unique():
+            word_count = len(items[items['page_num'] == p]) + word_count
+
+        if word_count / len(tmp_items['page_num'].unique()) < 10:
+            continue
+        h_next = max(heights.index.values[heights.index.values < h])
+        if (len(items[items['height'].between(0.99 * h_next, 1.01 * h_next)]) > min_dish_count) and (heights.loc[h]['count'] > heights.loc[h_next]['count']):
+            continue
+        else:
+            break
+    return cat_h
+
+
+def delete_empty_names(df):
+    df = df[df.name.str.strip().ne("") & df.name.notnull()]
+    return df
+
+
+def union_items(df, items):
+    df['flag'] = 1
+    for i in range(1, len(df)):
+        tmp_cat_name = find_closest_down(df.iloc[[i - 1]], df)
+        if len(tmp_cat_name) == 0:
+            continue
+
+        if list(find_closest_down(df.iloc[[i - 1]],
+                                  items)['name'])[0] == list(tmp_cat_name['name'])[0]:
+            df.loc[i - 1, 'flag'] = 0
+            df.loc[i, 'name'] = str(df.iloc[i - 1]['name']) + str(
+                df.iloc[i]['name'])
+
+            df.loc[i, 'x0'] = min(df.iloc[i - 1]['x0'],
+                                  df.iloc[i]['x0'])
+            df.loc[i, 'x1'] = max(df.iloc[i - 1]['x1'],
+                                  df.iloc[i]['x1'])
+
+            df.loc[i, 'y0'] = min(df.iloc[i - 1]['y0'],
+                                  df.iloc[i]['y0'])
+            df.loc[i, 'y1'] = max(df.iloc[i - 1]['y1'],
+                                  df.iloc[i]['y1'])
+
+    df = df[df['flag'] == 1]
+    df = df.drop(columns=['flag'])
+    df = df.reset_index(drop=True)
+    return df
+
 
