@@ -13,6 +13,8 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams, LTTextBox
 from pdfminer.converter import PDFPageAggregator
 
+import pdf_rectangle
+
 # Read configuration file
 with open("config.yaml", 'r') as stream:
 	try:
@@ -123,7 +125,16 @@ for path in pathlist:
 		if len(cat_list) > len(cat_n):
 			cat_n = cat_list
 
-		print(cat_n)
+		# Draw layout with categories
+		path_layout_out = r'%s\%s\%s.pdf' % (setting['path_layout_folder'], folder_input_name, file_name)
+		rect_cat = pdf_rectangle.Rectangle(input_df=cat_n, path_output=path_layout_out, pdf_path=path_in_str)
+		rect_cat.pdf_splitter()
+		rect_cat.draw_recs()
+		#Create new folder with rest_name
+		rect_cat.create_folder(folder_name=folder_input_name)
+		rect_cat.merger()
+
+
 
 	except Exception as e:
 		print(e)
