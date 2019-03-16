@@ -1,5 +1,7 @@
+'folder': 'F:\100nuts\TEST_10'
 'folder_input': 'C:\\Users\\User\\Documents\\100nuts\\PDF_COVETOR\\PDF_example\\test'
 'min_cat_count': 2
 'min_dish_count': 6
 'path_layout_out': 'F:\100nuts\MENUES_LAYOTED'
-'path_layout_folder': 'F:\100nuts\MENUS_OUT'
+'path_layout_folder': 'F:\\100nuts\\MENUS_OUT'
+'init_id': 2000
