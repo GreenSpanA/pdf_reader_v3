@@ -38,33 +38,40 @@ class PdfFile:
 
 	# Obtain pd.DataFrame with all items in pdf file.
 	def get_items(self):
-		pdf = pdfquery.PDFQuery(self.path)
-		print('Start downloading pdf...')
-		pdf.load()
 		items = pd.DataFrame(columns=self.df_columns)
-		pq_items = pdf.pq('LTTextBoxVertical, LTTextLineHorizontal')
 		try:
-			for pq in pq_items:
+			pdf = pdfquery.PDFQuery(self.path)
+			print('Start downloading pdf...')
+			pdf.load()
+			pq_items = pdf.pq('LTTextBoxVertical, LTTextLineHorizontal')
+			try:
+				for pq in pq_items:
 
-				page_pq = next(pq.iterancestors('LTPage'))  # Use just the first ancestor
-				page_num = page_pq.layout.pageid
-				cur_str_item = str(pq.layout)
-				tmp_items = pd.DataFrame([[
-					get_name(cur_str_item),
-					float(get_coordinates(cur_str_item)[0]),
-					float(get_coordinates(cur_str_item)[2]),
-					float(get_coordinates(cur_str_item)[1]),
-					float(get_coordinates(cur_str_item)[3])
-				]],
-					columns=['name', 'x0', 'x1', 'y0', 'y1'])
-				tmp_items['height'] = get_diff3(tmp_items['y1'], tmp_items['y0'])
-				tmp_items['width'] = get_diff3(tmp_items['x1'], tmp_items['x0'])
-				tmp_items['page_num'] = page_num
+					page_pq = next(pq.iterancestors('LTPage'))  # Use just the first ancestor
+					page_num = page_pq.layout.pageid
+					cur_str_item = str(pq.layout)
+					tmp_items = pd.DataFrame([[
+						get_name(cur_str_item),
+						float(get_coordinates(cur_str_item)[0]),
+						float(get_coordinates(cur_str_item)[2]),
+						float(get_coordinates(cur_str_item)[1]),
+						float(get_coordinates(cur_str_item)[3])
+					]],
+						columns=['name', 'x0', 'x1', 'y0', 'y1'])
+					tmp_items['height'] = get_diff3(tmp_items['y1'], tmp_items['y0'])
+					tmp_items['width'] = get_diff3(tmp_items['x1'], tmp_items['x0'])
+					tmp_items['page_num'] = page_num
 
-				items = items.append(tmp_items, ignore_index=True)
+					items = items.append(tmp_items, ignore_index=True)
 
-		except Exception as e:
-			items = pd.DataFrame(columns=self.df_columns)
+			except Exception as e:
+				items = pd.DataFrame(columns=self.df_columns)
+
+			finally:
+				return items
+
+		except Exception as e1:
+			print(e1)
 
 		finally:
 			return items

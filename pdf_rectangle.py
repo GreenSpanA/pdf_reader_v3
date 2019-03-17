@@ -17,7 +17,8 @@ from pathlib import Path
 class Rectangle:
 	# Initializer
 	folder_splitted = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files'
-	folder_splitted_layoted = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted'
+	folder_splitted_layoted = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Categories'
+	folder_splitted_layoted_dishes = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Dishes'
 	folder_layoted = r'F:\100nuts\MENUS_OUT'
 
 	def __init__(self, input_df, path_output, pdf_path):
@@ -39,6 +40,7 @@ class Rectangle:
 	def pdf_splitter(self):
 		Rectangle.remove_from_folder(self.folder_splitted_layoted)
 		Rectangle.remove_from_folder(self.folder_splitted)
+		Rectangle.remove_from_folder(self.folder_splitted_layoted_dishes)
 		path = self.pdf_path
 		folder_out = self.folder_splitted
 		fname = os.path.splitext(os.path.basename(path))[0]
@@ -57,7 +59,7 @@ class Rectangle:
 			print('Created: {}'.format(output_filename))
 
 	def out_pathes(self):
-		output_path = self.folder_splitted_layoted
+		output_path = self.folder_splitted_layoted_dishes
 		tmp = r'%s\*.pdf' % output_path
 		paths = glob.glob(tmp)
 		paths.sort()
@@ -140,17 +142,30 @@ class Rectangle:
 		outputStream.close()
 		return
 
-	def draw_recs(self):
+	def draw_recs(self, item_entity='cat'):
 		df = self.input_df
 		for i in list(df['page_num'].unique()):
-			print(df)
 			path = self.pdf_path
 			fname = os.path.splitext(os.path.basename(path))[0]
 			path_input = r'%s\%s_page_%s.pdf' % (self.folder_splitted, fname, i)
-			path_output = r'%s\%s_page_%s.pdf' % (self.folder_splitted_layoted, fname, i)
+			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, item_entity)
 
 			print("Input is %s; output is %s" % (path_input, path_output))
 
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='green')
 		return
+
+	def draw_dishes(self, df, item_entity='items'):
+		for i in list(df['page_num'].unique()):
+			path = self.pdf_path
+			fname = os.path.splitext(os.path.basename(path))[0]
+			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, 'cat')
+			print("NEW: %s" % path_input)
+			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_dishes, fname, i, item_entity)
+
+			print("Input is %s; output is %s" % (path_input, path_output))
+
+			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
+										 df=df[df['page_num'] == i], show_height=False, color='red')
+
