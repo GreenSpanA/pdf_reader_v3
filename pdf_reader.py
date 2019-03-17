@@ -307,6 +307,9 @@ def find_closest_down(e, df):
     df = df[df['page_num'] == page_n]
     # Cut element y1< e['y1']
     df = df[df['y1'] < list(e['y1'])[0]]
+    tmp_mean = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
+    df = df[df['x0'] <= tmp_mean]
+    df = df[df['x1'] >= 0.5 * tmp_mean]
     # Sort items top -> buttom -> right
     try:
         e_closest_bottom = find_closest_element_center(e, df)
@@ -314,6 +317,23 @@ def find_closest_down(e, df):
     except:
         e_closest_bottom = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
     return e_closest_bottom
+
+
+def find_closest_up(e, df):
+    # Select items on the same page
+    page_n = list(e['page_num'])[0]
+    df = df[df['page_num'] == page_n]
+    df = df[df['y0'] > list(e['y0'])[0]]
+
+    tmp_mean = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
+    # df = df[df['x0'] <= list(e['x1'])[0]]
+    df = df[df['x0'] <= tmp_mean]
+    df = df[df['x1'] >= 0.5 * tmp_mean]
+    try:
+        e_closest_top = find_closest_element_y(e, df)
+    except:
+        e_closest_top = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
+    return e_closest_top
 
 
 def find_closest_right(e, df, is_same_level=True):
