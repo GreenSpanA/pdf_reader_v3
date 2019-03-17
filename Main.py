@@ -15,7 +15,7 @@ import pdf_rectangle
 
 import msSQL
 from pdf_reader import find_cat_h, delete_empty_names, collapse_rows, union_items
-from pdf_reader import find_closest_right
+from pdf_reader import find_closest_right, round3
 from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_price
 from menu_entity import cut_prices_form_df, get_items_dish_price
 
@@ -33,7 +33,7 @@ with open("config.yaml", 'r') as stream:
 	except yaml.YAMLError as exc:
 		print(exc)
 
-
+#folder = setting['folder_initial']
 folder = setting['folder_input']
 #folder = setting['folder']
 folder_input_short = [dI for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
@@ -183,7 +183,7 @@ for folder_input_short in folder_input_short:
 			except Exception as e:
 				print("Error! Error with dishes_prices. Count of df is: %s" % len(dishes_prices))
 
-			# Finding {dishes} + prices
+			# Finding {dishes} + {prices}
 			items = items.sort_values(['page_num', 'x0', 'y1'], ascending=[True, True, False])
 			items.reset_index(inplace=True, drop=True)
 
@@ -214,8 +214,22 @@ for folder_input_short in folder_input_short:
 			if (Is_Dish_With_Price == False):
 				tmp_dishes = get_items_dish_price(items)
 				Dishes = tmp_dishes
-
 				Dishes = cut_prices_form_df(Dishes)
+
+			# Define categoty's H
+				try:
+					cat_tmp_h = round3(max(Heights_items[Heights_items['count'] >= min_cat_count].index.values))
+				except:
+					cat_tmp_h = 0
+
+				Is_Current_Cat = True
+				if abs(cat_h - cat_tmp_h) / cat_h > 0.05:
+					Is_Current_Cat = False
+					Categories = items[items['height'] == cat_tmp_h]
+					Categories = delete_empty_names(Categories)
+					Categories = cut_prices_form_df(Categories)
+
+			print("The cats are %s" % Is_Current_Cat)
 				# Draw layout with categories
 
 			try:

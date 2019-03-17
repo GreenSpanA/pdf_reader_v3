@@ -161,7 +161,6 @@ class Rectangle:
 			path = self.pdf_path
 			fname = os.path.splitext(os.path.basename(path))[0]
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, 'cat')
-			print("NEW: %s" % path_input)
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_dishes, fname, i, item_entity)
 
 			print("Input is %s; output is %s" % (path_input, path_output))

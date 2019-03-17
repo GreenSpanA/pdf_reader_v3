@@ -326,7 +326,9 @@ def find_closest_right(e, df, is_same_level=True):
 
     # df_right = df_right[df_right['x0'] <= list(e['x1'])[0]]
     if is_same_level:
-        df_right = df_right[df_right['y1'].between(0.99 * list(e['y1'])[0], 1.01 * list(e['y1'])[0])]
+        tmp_mean = 0.5 * (list(e['y0'])[0] + list(e['y1'])[0])
+        df_right = df_right[df_right['y1'] >= tmp_mean]
+        df_right = df_right[df_right['y0'] <= tmp_mean]
         # find closest buttom element
     try:
         e_closest_right = find_closest_element(e, df_right, tmp_x='x0', tmp_y='y0', tmp_x1='x1', tmp_y1='y0')

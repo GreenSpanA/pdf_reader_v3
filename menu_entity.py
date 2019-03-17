@@ -4,7 +4,7 @@ from pdf_reader import find_closest_right
 def is_separate_price(s):
     flag = False
     numbers = sum(c.isdigit() for c in s)
-    if numbers >= 0.5*len(s):
+    if numbers >= 0.5*len(s.replace(" ", "")):
         flag = True
     return flag
 
@@ -12,7 +12,7 @@ def is_separate_price(s):
 def is_dish_with_price(e):
     flag = False
     try:
-        if len(list(e['name'])[0]) > 5 and is_separate_price(list(e['name'])[0].split()[-1]):
+        if len(list(e['name'])[0].strip()) > 5 and is_separate_price(list(e['name'])[0].split()[-1]):
             flag = True
     except:
         flag = False
@@ -22,7 +22,7 @@ def is_dish_with_price(e):
 def is_dish_then_price(e, df):
     flag = False
     try:
-        e_right = find_closest_right(e, df)
+        e_right = find_closest_right(e, df, is_same_level=True)
         if len(list(e['name'])[0]) > 5 and is_separate_price(list(e_right['name'])[0].split()[-1]):
             flag = True
     except:
