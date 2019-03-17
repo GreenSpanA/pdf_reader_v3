@@ -17,7 +17,7 @@ import msSQL
 from pdf_reader import find_cat_h, delete_empty_names, collapse_rows, union_items
 from pdf_reader import find_closest_right
 from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_price
-from menu_entity import cut_prices_form_df
+from menu_entity import cut_prices_form_df, get_items_dish_price
 
 # Connection string
 connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
@@ -34,8 +34,8 @@ with open("config.yaml", 'r') as stream:
 		print(exc)
 
 
-#folder = setting['folder_input']
-folder = setting['folder']
+folder = setting['folder_input']
+#folder = setting['folder']
 folder_input_short = [dI for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
 
 if len(folder_input_short) == 0:
@@ -172,12 +172,10 @@ for folder_input_short in folder_input_short:
 			try:
 				Heights_items = pd.crosstab(index=dishes_prices["height"], columns="count")
 				Heights_items = Heights_items[Heights_items['count'] > min_cat_count]
+				tmp_h = Heights_items[Heights_items['count'] == max(Heights_items['count'])].index.values[0]
+				dishes_prices = items[items['height'].between(0.99 * tmp_h, 1.01 * tmp_h)]
 			except:
 				Heights_items = Heights
-
-			tmp_h = Heights_items[Heights_items['count'] == max(Heights_items['count'])].index.values[0]
-
-			dishes_prices = items[items['height'].between(0.99 * tmp_h, 1.01 * tmp_h)]
 
 			try:
 				dishes_prices = delete_empty_names(dishes_prices)
@@ -185,8 +183,7 @@ for folder_input_short in folder_input_short:
 			except Exception as e:
 				print("Error! Error with dishes_prices. Count of df is: %s" % len(dishes_prices))
 
-			# Finding {dishes  prices}
-
+			# Finding {dishes} + prices
 			items = items.sort_values(['page_num', 'x0', 'y1'], ascending=[True, True, False])
 			items.reset_index(inplace=True, drop=True)
 
@@ -213,6 +210,12 @@ for folder_input_short in folder_input_short:
 
 			print("Count of dishes is: %s" % len(Dishes))
 
+			# Case {dish} + {price}
+			if (Is_Dish_With_Price == False):
+				tmp_dishes = get_items_dish_price(items)
+				Dishes = tmp_dishes
+
+				Dishes = cut_prices_form_df(Dishes)
 				# Draw layout with categories
 
 			try:

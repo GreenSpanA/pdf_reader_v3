@@ -40,3 +40,17 @@ def cut_prices_form_df(df):
     df = df.drop(columns=['flag'])
     df = df.reset_index(drop=True)
     return df
+
+
+def get_items_dish_price(df):
+    df['flag'] = 0
+    df = df.reset_index(drop=True)
+
+    for i in range(0, len(df)):
+        if is_dish_then_price(df.iloc[[i]], df):
+            df.loc[i, 'flag'] = 1
+
+    df = df[df['flag'] == 1]
+    df = df.drop(columns=['flag'])
+    df = df.reset_index(drop=True)
+    return df

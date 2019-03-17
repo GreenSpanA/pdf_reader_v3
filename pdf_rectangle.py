@@ -157,7 +157,7 @@ class Rectangle:
 		return
 
 	def draw_dishes(self, df, item_entity='items'):
-		for i in list(df['page_num'].unique()):
+		for i in list(self.input_df['page_num'].unique()):
 			path = self.pdf_path
 			fname = os.path.splitext(os.path.basename(path))[0]
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, 'cat')
