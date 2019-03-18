@@ -1,5 +1,6 @@
 from pdf_reader import find_closest_right, find_closest_down, delete_empty_names
 import pandas as pd
+import math
 
 
 def is_separate_price(s):
@@ -124,5 +125,45 @@ def get_prices_dish_price(_Dishes, _items):
 
     except:
         print("Without prices")
-
     return Prices
+
+
+def get_post_prices_dish_price(_Prices, median_H):
+    _Prices = _Prices.reset_index(drop=True)
+    # median_H = _Prices['height'].median()
+    prices_n = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
+    try:
+        for i in range(0, len(_Prices)):
+            big_prices = _Prices.iloc[[i]]
+            big_prices = big_prices.reset_index(drop=True)
+            height_a = _Prices.iloc[i]['height'] / len(list(_Prices.iloc[[i]]['name'])[0])
+            tmp_len = math.ceil(list(big_prices['height'])[0] / median_H)
+
+            if tmp_len > 1:
+                for j in range(0, tmp_len):
+                    tmp_x0, tmp_x1 = _Prices.iloc[i]['x0'], _Prices.iloc[i]['x1']
+                    tmp_y0, tmp_y1 = _Prices.iloc[i]['y1'] - (j + 1) * height_a, _Prices.iloc[i]['y1'] - j * height_a
+                    tmp_price = pd.DataFrame({
+                        'name': [_Prices.iloc[i]['name'][j]],
+                        'x0': [tmp_x0],
+                        'x1': [tmp_x1],
+                        'y0': [tmp_y0],
+                        'y1': [tmp_y1],
+                        'height': [height_a],
+                        'width': [list(_Prices.iloc[[i]]['width'])[0]],
+                        'page_num': [list(_Prices.iloc[[i]]['page_num'])[0]]})
+                    prices_n = prices_n.append(tmp_price, ignore_index=True)
+            else:
+                tmp_price = pd.DataFrame({
+                    'name': [list(_Prices.iloc[[i]]['name'])[0]],
+                    'x0': [list(_Prices.iloc[[i]]['x0'])[0]],
+                    'x1': [list(_Prices.iloc[[i]]['x1'])[0]],
+                    'y0': [list(_Prices.iloc[[i]]['y0'])[0]],
+                    'y1': [list(_Prices.iloc[[i]]['y1'])[0]],
+                    'height': [list(_Prices.iloc[[i]]['height'])[0]],
+                    'width': [list(_Prices.iloc[[i]]['width'])[0]],
+                    'page_num': [list(_Prices.iloc[[i]]['page_num'])[0]]})
+                prices_n = prices_n.append(tmp_price, ignore_index=True)
+    except:
+        print("Error with post price's processing ")
+    return prices_n
