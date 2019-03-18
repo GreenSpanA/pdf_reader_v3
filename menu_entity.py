@@ -99,5 +99,30 @@ def get_description_dish_price(_Dishes, _items):
                 Descriptions = Descriptions.append(descr, ignore_index=True)
     except:
         print("Without descriptions")
-
     return Descriptions
+
+
+def get_prices_dish_price(_Dishes, _items):
+    Prices = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
+    try:
+        _Dishes = _Dishes.reset_index(drop=True)
+        for i in range(0, len(_Dishes)):
+            e = _Dishes.iloc[[i]]
+            e_right = find_closest_right(e, _items, is_same_level=True)
+            if is_separate_price(list(e_right['name'])[0]):
+                p = pd.DataFrame({
+                    'name': [list(e_right['name'])[0]],
+                    'x0': [list(e_right['x0'])[0]],
+                    'x1': [list(e_right['x1'])[0]],
+                    'y0': [list(e_right['y0'])[0]],
+                    'y1': [list(e_right['y1'])[0]],
+                    'height': [list(e_right['height'])[0]],
+                    'width': [list(e_right['width'])[0]],
+                    'page_num': [list(e_right['page_num'])[0]]
+                })
+                Prices = Prices.append(p, ignore_index=True)
+
+    except:
+        print("Without prices")
+
+    return Prices

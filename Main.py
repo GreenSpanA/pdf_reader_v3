@@ -17,7 +17,7 @@ import msSQL
 from pdf_reader import find_cat_h, delete_empty_names, collapse_rows, union_items
 from pdf_reader import find_closest_right, round3
 from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_price
-from menu_entity import cut_prices_form_df, get_items_dish_price, get_description_dish_price
+from menu_entity import cut_prices_form_df, get_items_dish_price, get_description_dish_price, get_prices_dish_price
 
 # Connection string
 connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
@@ -232,16 +232,19 @@ for folder_input_short in folder_input_short:
 			print("The cats are %s" % Is_Current_Cat)
 
 			# Define Descriptions  {dish} + {price}
-			Descriptions = get_description_dish_price(Dishes, items)
+			if Is_Dish_With_Price == False:
+				Descriptions = get_description_dish_price(Dishes, items)
+				Prices = get_prices_dish_price(Dishes, items)
+
 
 				# Draw layout with categories
-
 			try:
 				path_layout_out = r'%s\%s\%s.pdf' % (setting['path_layout_folder'], folder_input_name, file_name)
 				rect_cat = pdf_rectangle.Rectangle(input_df=Categories, path_output=path_layout_out, pdf_path=path_in_str)
 				rect_cat.pdf_splitter()
 				rect_cat.draw_recs()
 				rect_cat.draw_dishes(df=Dishes)
+				rect_cat.draw_prices(df=Prices)
 				rect_cat.draw_desc(df=Descriptions)
 				# Create new folder with rest_name
 				rect_cat.create_folder(folder_name=folder_input_name)

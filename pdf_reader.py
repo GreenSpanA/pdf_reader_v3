@@ -307,16 +307,32 @@ def find_closest_down(e, df):
     df = df[df['page_num'] == page_n]
     # Cut element y1< e['y1']
     df = df[df['y1'] < list(e['y1'])[0]]
-    tmp_mean = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
+    #17.03.2019
+    tmp_mean = 0.5*(list(e['x0'])[0] + list(e['x1'])[0])
+    #df = df[df['x0'] <= list(e['x1'])[0]]
     df = df[df['x0'] <= tmp_mean]
-    df = df[df['x1'] >= 0.5 * tmp_mean]
+    df = df[df['x1'] >= 0.5*tmp_mean]
     # Sort items top -> buttom -> right
+    #df.sort_values(by=['y1', 'x1'], ascending= [False, True])
+    #find closest buttom element
     try:
-        e_closest_bottom = find_closest_element_center(e, df)
+        e_closest_bottom = find_closest_element_y(e, df)
         #tmp_dist = find_len()
     except:
         e_closest_bottom = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
     return e_closest_bottom
+
+
+def find_closest_element_y(e, df2):
+    # dataframes to numpy arrays of complex numbers
+    p1 = (0*(e['x1'] + e['x0']) + 1j * 0.5*(e['y0'] + e['y1'])).values
+    p2 = (0*(df2['x1'] + df2['x0']) + 1j * 0.5*(df2['y0'] + df2['y1'])).values
+    # calculate all the distances, between each point in
+    # e and each point in df2 (using an array-broadcasting trick)
+    all_dists = abs(p1[..., np.newaxis] - p2)
+    nearest_idxs1= np.argmin(all_dists)
+
+    return df2.iloc[[nearest_idxs1]]
 
 
 def find_closest_up(e, df):
@@ -426,5 +442,3 @@ def union_items(df, items):
     df = df.drop(columns=['flag'])
     df = df.reset_index(drop=True)
     return df
-
-

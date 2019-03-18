@@ -20,6 +20,7 @@ class Rectangle:
 	folder_splitted_layoted = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Categories'
 	folder_splitted_layoted_dishes = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Dishes'
 	folder_splitted_layoted_descr = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Descriptions'
+	folder_splitted_layoted_price = r'F:\100nuts\MENUES_LAYOTED\Splitted_Files\Layoted\Prices'
 	folder_layoted = r'F:\100nuts\MENUS_OUT'
 
 	def __init__(self, input_df, path_output, pdf_path):
@@ -42,6 +43,7 @@ class Rectangle:
 		Rectangle.remove_from_folder(self.folder_splitted_layoted)
 		Rectangle.remove_from_folder(self.folder_splitted)
 		Rectangle.remove_from_folder(self.folder_splitted_layoted_dishes)
+		Rectangle.remove_from_folder(self.folder_splitted_layoted_price)
 		Rectangle.remove_from_folder(self.folder_splitted_layoted_descr)
 		path = self.pdf_path
 		folder_out = self.folder_splitted
@@ -175,11 +177,25 @@ class Rectangle:
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='red')
 
-	def draw_desc(self, df, item_entity='desc'):
+
+	def draw_prices(self, df, item_entity='prices'):
 		for i in list(self.input_df['page_num'].unique()):
 			path = self.pdf_path
 			fname = os.path.splitext(os.path.basename(path))[0]
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_dishes, fname, i, 'items')
+			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_price, fname, i, item_entity)
+
+			print("Input is %s; output is %s" % (path_input, path_output))
+
+			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
+										 df=df[df['page_num'] == i], show_height=False, color='pink')
+
+
+	def draw_desc(self, df, item_entity='desc'):
+		for i in list(self.input_df['page_num'].unique()):
+			path = self.pdf_path
+			fname = os.path.splitext(os.path.basename(path))[0]
+			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_price, fname, i, 'prices')
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_descr, fname, i, item_entity)
 
 			print("Input is %s; output is %s" % (path_input, path_output))
