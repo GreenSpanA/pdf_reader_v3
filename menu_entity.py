@@ -127,8 +127,8 @@ def get_prices_dish_price(_Dishes, _items):
         print("Without prices")
     return Prices
 
-
 def get_post_prices_dish_price(_Prices, median_H):
+    print("Go in Function egt_post.... Initail len is %s" %len(_Prices))
     _Prices = _Prices.reset_index(drop=True)
     # median_H = _Prices['height'].median()
     prices_n = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
@@ -137,7 +137,8 @@ def get_post_prices_dish_price(_Prices, median_H):
             big_prices = _Prices.iloc[[i]]
             big_prices = big_prices.reset_index(drop=True)
             height_a = _Prices.iloc[i]['height'] / len(list(_Prices.iloc[[i]]['name'])[0])
-            tmp_len = math.ceil(list(big_prices['height'])[0] / median_H)
+            #tmp_len = math.ceil(list(big_prices['height'])[0] / median_H)
+            tmp_len = int(round(list(big_prices['height'])[0] / median_H))
 
             if tmp_len > 1:
                 for j in range(0, tmp_len):
@@ -166,4 +167,33 @@ def get_post_prices_dish_price(_Prices, median_H):
                 prices_n = prices_n.append(tmp_price, ignore_index=True)
     except:
         print("Error with post price's processing ")
+
+    print("end Function egt_post.... Initail len is %s" % len(_Prices))
     return prices_n
+
+def collapse_prices(df):
+    df = df.reset_index(drop=True)
+    # Collapse rows
+    df['flag'] = 1
+    for i in range(0, len(df)):
+        e = df.iloc[[i]]
+        tmp_y_mean = 0.5*(e.iloc[0]['y0'] + e.iloc[0]['y1'])
+        df_temp = df[df['page_num'] == e.iloc[0]['page_num']]
+        df_temp = df_temp[(df_temp['y0'] <= tmp_y_mean) & (df_temp['y1'] >= tmp_y_mean)]
+        #print("For iteration %s count is %s" % (i, len(df_temp)))
+        df_temp = df_temp[(df_temp['x0'] <= e.iloc[0]['x1']) & (df_temp['x0'] > e.iloc[0]['x0'])]
+        #print(len(df_temp))
+        if len(df_temp) == 0:
+            continue
+        else:
+            flag_index = df_temp.index.values[0]
+            df.loc[i, 'name'] = str(df.loc[i, 'name']) + str(df_temp.iloc[0]['name'])
+            df.loc[i, 'x1'] = df_temp.iloc[0]['x1']
+            df.loc[i, 'y0'] = min(df_temp.iloc[0]['y0'],  df.loc[i, 'y0'])
+            df.loc[i, 'y1'] = max(df_temp.iloc[0]['y1'],  df.loc[i, 'y1'])
+            df.loc[flag_index, 'flag'] = 0
+
+    df = df[df['flag'] == 1]
+    df = df.drop(columns=['flag'])
+    df = df.reset_index(drop=True)
+    return df

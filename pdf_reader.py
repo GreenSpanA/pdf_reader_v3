@@ -352,22 +352,20 @@ def find_closest_up(e, df):
     return e_closest_top
 
 
-def find_closest_right(e, df, is_same_level=True):
+def find_closest_right(e, df, is_same_level=False):
     # Select items on the same page
     page_n = list(e['page_num'])[0]
     df = df[df['page_num'] == page_n]
     df = df[df.name.str.strip().ne("") & df.name.notnull()]
     # Cut element x0 >  e['x1']
     df_right = df[df['x0'] > list(e['x1'])[0]]
-
-    # df_right = df_right[df_right['x0'] <= list(e['x1'])[0]]
+    df_right = df_right[df_right['y1'] <= 1.01 * list(e['y1'])[0]]
     if is_same_level:
         tmp_mean = 0.5 * (list(e['y0'])[0] + list(e['y1'])[0])
         df_right = df_right[df_right['y1'] >= tmp_mean]
         df_right = df_right[df_right['y0'] <= tmp_mean]
-        # find closest buttom element
     try:
-        e_closest_right = find_closest_element(e, df_right, tmp_x='x0', tmp_y='y0', tmp_x1='x1', tmp_y1='y0')
+        e_closest_right = find_closest_element(e, df_right, tmp_x='x1', tmp_y='y0', tmp_x1='x0', tmp_y1='y1')
 
     except:
         e_closest_right = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])

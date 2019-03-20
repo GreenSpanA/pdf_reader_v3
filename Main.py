@@ -5,6 +5,7 @@ import os
 from datetime import datetime, date, time
 import pyodbc
 import pandas as pd
+import tqdm
 
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
@@ -17,8 +18,8 @@ import msSQL
 from pdf_reader import find_cat_h, delete_empty_names, collapse_rows, union_items
 from pdf_reader import find_closest_right, round3
 from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_price
-from menu_entity import cut_prices_form_df, get_items_dish_price, \
-	get_description_dish_price, get_prices_dish_price, get_post_prices_dish_price
+from menu_entity import	get_description_dish_price, get_prices_dish_price
+from menu_entity import cut_prices_form_df, get_items_dish_price, collapse_prices, get_post_prices_dish_price
 
 # Connection string
 connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
@@ -43,7 +44,7 @@ if len(folder_input_short) == 0:
 	print("Empry folder %s" % folder)
 
 # Iterate over subdirectorys in the folder
-for folder_input_short in folder_input_short:
+for folder_input_short in tqdm.tqdm(folder_input_short):
 	folder_input = r'%s\%s' % (folder, folder_input_short)
 	print("Start with folder %s" % folder_input)
 
@@ -209,9 +210,10 @@ for folder_input_short in folder_input_short:
 				Dishes = dishes_and_prices
 				Is_Dish_With_Price = True
 
-			print("Count of dishes is: %s" % len(Dishes))
+			#Dishes.to_csv(r'F:\100nuts\Dishes.txt', header=True, index=True, sep=';', mode='a')
 
-			# Case {dish} + {price}
+			# CASE: {dish} + {price}
+			print("Go in CASE:  {dish} + {price}")
 			if (Is_Dish_With_Price == False):
 				tmp_dishes = get_items_dish_price(items)
 				Dishes = tmp_dishes
@@ -230,13 +232,17 @@ for folder_input_short in folder_input_short:
 					Categories = delete_empty_names(Categories)
 					Categories = cut_prices_form_df(Categories)
 
-			print("The cats are %s" % Is_Current_Cat)
+				print("The cats are %s" % Is_Current_Cat)
 
-			# Define Descriptions  {dish} + {price}
-			if Is_Dish_With_Price == False:
+				# Define Descriptions CASE: {dish} + {price}
 				Descriptions = get_description_dish_price(Dishes, items)
+				# Define Prices CASE: {dish} + {price}
 				Prices = get_prices_dish_price(Dishes, items)
 				Prices = get_post_prices_dish_price(Prices, Prices['height'].median())
+
+				Prices = collapse_prices(Prices)
+
+			# Define
 
 
 				# Draw layout with categories
@@ -262,3 +268,7 @@ for folder_input_short in folder_input_short:
 						time_log, path_in_str, folder_input_name, file_name, file_size, 0)
 			sql_log = msSQL.msSQL(connStr)
 			sql_log.insert_to_log(query)
+
+	#Updating progres bar
+		# finally:
+		# 	bar.update()
