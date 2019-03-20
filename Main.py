@@ -234,13 +234,16 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 
 				print("The cats are %s" % Is_Current_Cat)
 
-				# Define Descriptions CASE: {dish} + {price}
-				Descriptions = get_description_dish_price(Dishes, items)
+
 				# Define Prices CASE: {dish} + {price}
 				Prices = get_prices_dish_price(Dishes, items)
 				Prices = get_post_prices_dish_price(Prices, Prices['height'].median())
-
 				Prices = collapse_prices(Prices)
+
+				# Define Descriptions CASE: {dish} + {price}
+				Descriptions = get_description_dish_price(_Dishes=Dishes, _items=items, _Prices=Prices)
+
+
 
 			# Define
 

@@ -6,7 +6,9 @@ import math
 def is_separate_price(s):
     flag = False
     numbers = sum(c.isdigit() for c in s)
-    if numbers >= 0.5*len(s.replace(" ", "")):
+    s = s.replace(" ", "")
+    s = s.strip()
+    if numbers >= 0.5*len(s) and s[-1].isdigit():
         flag = True
     return flag
 
@@ -58,25 +60,31 @@ def get_items_dish_price(df):
     return df
 
 
-def get_description_dish_price(_Dishes, _items):
+def get_description_dish_price(_Dishes, _items, _Prices):
     Descriptions = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
     try:
         _Dishes = _Dishes.reset_index(drop=True)
         for i in range(0, len(_Dishes)):
             e = _Dishes.iloc[[i]]
-            tmp_descr = _items[_items['height'] <= list(e['height'])[0]]
+            tmp_descr = _items[_items['height'] < list(e['height'])[0]]
             e_down = find_closest_down(e, _Dishes)
 
             tmp_descr = tmp_descr[tmp_descr['page_num'] == list(e['page_num'])[0]]
-            tmp_descr = tmp_descr[tmp_descr['y1'] <= list(e['y0'])[0]]
+            #tmp_descr = tmp_descr[tmp_descr['y1'] <= list(e['y0'])[0]]
+            tmp_descr = tmp_descr[tmp_descr['y1'] <= 0.5 * (list(e['y0'])[0] + list(e['y1'])[0])]
 
             if (len(e_down) > 0):
-                tmp_descr = tmp_descr[tmp_descr['y0'] >= list(e_down['y1'])[0]]
+                #tmp_descr = tmp_descr[tmp_descr['y0'] >= list(e_down['y1'])[0]]
+                 tmp_descr = tmp_descr[tmp_descr['y0'] >= 0.5 * (list(e_down['y0'])[0] + list(e_down['y1'])[0])]
+            # else:
+            #     tmp_descr = tmp_descr[tmp_descr['y0'] >= 0.5 * (list(e_down['y0'])[0] + list(e_down['y1'])[0])]
+            #e_center_X = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
 
-            e_center_X = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
 
-            tmp_descr = tmp_descr[tmp_descr['x0'] <= e_center_X]
-            tmp_descr = tmp_descr[tmp_descr['x1'] >= e_center_X]
+            # tmp_descr = tmp_descr[tmp_descr['x0'] <= e_center_X]
+            # tmp_descr = tmp_descr[tmp_descr['x1'] >= e_center_X]
+            tmp_descr = tmp_descr[tmp_descr['x0'] < list(e['x1'])[0]]
+            tmp_descr = tmp_descr[tmp_descr['x1'] > list(e['x0'])[0]]
 
             tmp_descr = delete_empty_names(tmp_descr)
             tmp_descr = tmp_descr.reset_index(drop=True)
@@ -97,7 +105,10 @@ def get_description_dish_price(_Dishes, _items):
                     'page_num': [min(tmp_descr['page_num'])]
                 })
 
-                Descriptions = Descriptions.append(descr, ignore_index=True)
+                e_down_right = find_closest_right(descr, _Prices, is_same_level=True)
+                if len(e_down_right) > 0 and is_separate_price(e_down_right.iloc[0]['name']):
+                    continue
+            Descriptions = Descriptions.append(descr, ignore_index=True)
     except:
         print("Without descriptions")
     return Descriptions
@@ -128,7 +139,6 @@ def get_prices_dish_price(_Dishes, _items):
     return Prices
 
 def get_post_prices_dish_price(_Prices, median_H):
-    print("Go in Function egt_post.... Initail len is %s" %len(_Prices))
     _Prices = _Prices.reset_index(drop=True)
     # median_H = _Prices['height'].median()
     prices_n = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
@@ -167,8 +177,6 @@ def get_post_prices_dish_price(_Prices, median_H):
                 prices_n = prices_n.append(tmp_price, ignore_index=True)
     except:
         print("Error with post price's processing ")
-
-    print("end Function egt_post.... Initail len is %s" % len(_Prices))
     return prices_n
 
 def collapse_prices(df):

@@ -60,7 +60,7 @@ class Rectangle:
 			with open(output_filename, 'wb') as out:
 				pdf_writer.write(out)
 
-			print('Created: {}'.format(output_filename))
+			#print('Created: {}'.format(output_filename))
 
 	def out_pathes(self):
 		output_path = self.folder_splitted_layoted_descr
