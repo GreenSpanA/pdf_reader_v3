@@ -68,23 +68,18 @@ def get_description_dish_price(_Dishes, _items, _Prices):
             e = _Dishes.iloc[[i]]
             tmp_descr = _items[_items['height'] < list(e['height'])[0]]
             e_down = find_closest_down(e, _Dishes)
-
             tmp_descr = tmp_descr[tmp_descr['page_num'] == list(e['page_num'])[0]]
-            #tmp_descr = tmp_descr[tmp_descr['y1'] <= list(e['y0'])[0]]
             tmp_descr = tmp_descr[tmp_descr['y1'] <= 0.5 * (list(e['y0'])[0] + list(e['y1'])[0])]
 
             if (len(e_down) > 0):
-                #tmp_descr = tmp_descr[tmp_descr['y0'] >= list(e_down['y1'])[0]]
-                 tmp_descr = tmp_descr[tmp_descr['y0'] >= 0.5 * (list(e_down['y0'])[0] + list(e_down['y1'])[0])]
-            # else:
-            #     tmp_descr = tmp_descr[tmp_descr['y0'] >= 0.5 * (list(e_down['y0'])[0] + list(e_down['y1'])[0])]
-            #e_center_X = 0.5 * (list(e['x0'])[0] + list(e['x1'])[0])
+                tmp_descr = tmp_descr[tmp_descr['y0'] >= 0.5 * (list(e_down['y0'])[0] + list(e_down['y1'])[0])]
 
-
-            # tmp_descr = tmp_descr[tmp_descr['x0'] <= e_center_X]
-            # tmp_descr = tmp_descr[tmp_descr['x1'] >= e_center_X]
             tmp_descr = tmp_descr[tmp_descr['x0'] < list(e['x1'])[0]]
             tmp_descr = tmp_descr[tmp_descr['x1'] > list(e['x0'])[0]]
+            a = tmp_descr.index.values
+            a = a - min(a)
+            if len(a) - sum(a) != 1:
+                tmp_descr = tmp_descr.iloc[[min(a)]]
 
             tmp_descr = delete_empty_names(tmp_descr)
             tmp_descr = tmp_descr.reset_index(drop=True)

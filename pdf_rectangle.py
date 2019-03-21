@@ -159,7 +159,7 @@ class Rectangle:
 			path_input = r'%s\%s_page_%s.pdf' % (self.folder_splitted, fname, i)
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, item_entity)
 
-			print("Input is %s; output is %s" % (path_input, path_output))
+			#print("Input is %s; output is %s" % (path_input, path_output))
 
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='green')
@@ -172,7 +172,7 @@ class Rectangle:
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted, fname, i, 'cat')
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_dishes, fname, i, item_entity)
 
-			print("Input is %s; output is %s" % (path_input, path_output))
+			#print("Input is %s; output is %s" % (path_input, path_output))
 
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='red')
@@ -185,7 +185,7 @@ class Rectangle:
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_dishes, fname, i, 'items')
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_price, fname, i, item_entity)
 
-			print("Input is %s; output is %s" % (path_input, path_output))
+			#print("Input is %s; output is %s" % (path_input, path_output))
 
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='pink')
@@ -198,7 +198,7 @@ class Rectangle:
 			path_input = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_price, fname, i, 'prices')
 			path_output = r'%s\%s_page_%s_%s.pdf' % (self.folder_splitted_layoted_descr, fname, i, item_entity)
 
-			print("Input is %s; output is %s" % (path_input, path_output))
+			#print("Input is %s; output is %s" % (path_input, path_output))
 
 			Rectangle.pdf_boundary_boxes(self, path_input=path_input, path_output=path_output,
 										 df=df[df['page_num'] == i], show_height=False, color='blue')

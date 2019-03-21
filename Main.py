@@ -20,6 +20,7 @@ from pdf_reader import find_closest_right, round3
 from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_price
 from menu_entity import	get_description_dish_price, get_prices_dish_price
 from menu_entity import cut_prices_form_df, get_items_dish_price, collapse_prices, get_post_prices_dish_price
+from result_DF import get_Result
 
 # Connection string
 connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
@@ -28,6 +29,9 @@ connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
 						 "Trusted_Connection=yes")
 
 
+# Read Vegans combinations
+Vegans = pd.read_csv('F:\\100nuts\\Vegans_comment.csv', sep=";")
+
 # Read configuration file
 with open("config.yaml", 'r') as stream:
 	try:
@@ -35,26 +39,28 @@ with open("config.yaml", 'r') as stream:
 	except yaml.YAMLError as exc:
 		print(exc)
 
+Rest_id = setting['Rest_id']
 #folder = setting['folder_initial']
 folder = setting['folder_input']
 #folder = setting['folder']
 folder_input_short = [dI for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
+
+# print("Initital settings. Min. number of categories - %s; min. number of dishes -%s" % (min_cat_count, min_dish_count))
 
 if len(folder_input_short) == 0:
 	print("Empry folder %s" % folder)
 
 # Iterate over subdirectorys in the folder
 for folder_input_short in tqdm.tqdm(folder_input_short):
+	Rest_id = Rest_id + 1
 	folder_input = r'%s\%s' % (folder, folder_input_short)
-	print("Start with folder %s" % folder_input)
+	#print("Start with folder %s" % folder_input)
 
 	# folder_input = setting['folder_input']
 	folder_input_name = os.path.splitext(os.path.basename(folder_input))[0]
 	min_cat_count = setting['min_cat_count']
 	min_dish_count = setting['min_dish_count']
-
-	print("Initital settings. Min. number of categories - %s; min. number of dishes -%s" % (min_cat_count, min_dish_count))
-	print("Initail settings. Read files from folder %s." % folder_input)
+	#print("Initail settings. Read files from folder %s." % folder_input)
 
 	# Iterate over pdf files in the folder
 	pathlist = Path(folder_input).glob('**/*.pdf')
@@ -71,8 +77,8 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 		try:
 			items = file.get_items()
 			time_file_down = (datetime.now() - start_time).total_seconds()
-			print("Pdf file %s downloaded for %s seconds" % (file_name, str(time_file_down)))
-			print("File contain %s of elements" % len(items))
+			#print("Pdf file %s downloaded for %s seconds" % (file_name, str(time_file_down)))
+			#print("File contain %s of elements" % len(items))
 
 			if len(items) == 0:
 				query = "INSERT INTO dbo.pdf_convert_log([time], [file_path], [file_folder], [file_name], " \
@@ -84,11 +90,12 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 				sql_log.insert_to_log(query)
 				continue
 
+			page_num_max = max(items['page_num'])
 			# If picture
 			if len(items) > 0 and (len(items) < min_cat_count + 2 * min_dish_count):
-				print("Pdf file %s is not text" % file_name)
+				#print("Pdf file %s is not text" % file_name)
 				#time_log = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-				page_num_max = max(items['page_num'])
+
 				query = "INSERT INTO dbo.pdf_convert_log([time], [file_path], [file_folder], [file_name], " \
 							"[is_picture], [file_size], [page_count], [download_file_time], [is_parsed], [items_count]) " \
 							"values (convert(smalldatetime, '%s', 121), '%s', '%s', '%s', %s, %s, %s, %s, %s, %s)" % (time_log, path_in_str, folder_input_name,
@@ -106,7 +113,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			# Find height of category's box
 			try:
 				cat_h = find_cat_h(Heights, items, min_cat_count, min_dish_count)
-				print("Category heigth is: %s" % cat_h)
+				#print("Category heigth is: %s" % cat_h)
 			except Exception:
 				cat_h = 0
 
@@ -115,7 +122,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			cat_list = delete_empty_names(cat_list)
 			cat_list = collapse_rows(cat_list, sense=1.03)
 			cat_list = cat_list.sort_values(['page_num', 'y1', 'x0'], ascending=[True, False, True])
-			print("Categories count is: %s" % len(cat_list))
+			#print("Categories count is: %s" % len(cat_list))
 			cat_list = union_items(cat_list, items)
 
 			# Parse from pdf_miner
@@ -213,7 +220,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			#Dishes.to_csv(r'F:\100nuts\Dishes.txt', header=True, index=True, sep=';', mode='a')
 
 			# CASE: {dish} + {price}
-			print("Go in CASE:  {dish} + {price}")
+			#print("Go in CASE:  {dish} + {price}")
 			if (Is_Dish_With_Price == False):
 				tmp_dishes = get_items_dish_price(items)
 				Dishes = tmp_dishes
@@ -232,7 +239,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 					Categories = delete_empty_names(Categories)
 					Categories = cut_prices_form_df(Categories)
 
-				print("The cats are %s" % Is_Current_Cat)
+				#print("The cats are %s" % Is_Current_Cat)
 
 
 				# Define Prices CASE: {dish} + {price}
@@ -243,7 +250,44 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 				# Define Descriptions CASE: {dish} + {price}
 				Descriptions = get_description_dish_price(_Dishes=Dishes, _items=items, _Prices=Prices)
 
+				# Result for CASE: {dish} + {price}
+				tmp_Result = get_Result(_Dish=Dishes, _Categories=Categories, _Prices=Prices, _Description=Descriptions,
+									_filename=file_name, _Vegans=Vegans)
 
+				tmp_Result['rest_id'] = Rest_id
+				tmp_Result['file_name'] = file_name
+				tmp_Result['menu_link'] = None
+				tmp_Result['rest_name'] = folder_input_short
+				tmp_Result['update_time'] = time_log
+				tmp_Result['menu_type'] = file_name
+
+				parsed_items_count = len(Dishes) + len(Categories) + len(Prices) + len(Descriptions)
+
+				query = "INSERT INTO dbo.pdf_convert_log([time], [file_path], [file_folder], [file_name], " \
+						"[is_picture], [file_size], [page_count],[download_file_time], [algo_number]," \
+						"[is_parsed], [items_count], [parsed_items_count]) " \
+						"values (convert(smalldatetime, '%s', 121), '%s', '%s', '%s', %s,%s,%s,%s,%s,%s,%s,%s)" % (
+							time_log, path_in_str, folder_input_name, file_name, 0, file_size,
+							page_num_max, time_file_down, 1, 1, len(items), parsed_items_count)
+				sql_log1 = msSQL.msSQL(connStr)
+				sql_log1.insert_to_log(query)
+
+				for i in range(0, len(tmp_Result)):
+					query = "INSERT INTO dbo.menues([item_name], [description],[veg_comment],[price] ,[category], " \
+							"[file_name],[restaurant_name], [menu_type], [int_id] ,[update_time] ) " \
+							"values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
+							"'%s', %s, convert(smalldatetime, '%s', 121))" % (tmp_Result.iloc[i]['item_name'],
+																			  tmp_Result.iloc[i]['description'],
+																			  tmp_Result.iloc[i]['veg_comment'],
+																			  tmp_Result.iloc[i]['price'],
+																			  tmp_Result.iloc[i]['category'],
+																			  tmp_Result.iloc[i]['file_name'],
+																			  tmp_Result.iloc[i]['rest_name'],
+																			  tmp_Result.iloc[i]['menu_type'],
+																			  tmp_Result.iloc[i]['rest_id'],
+																			  tmp_Result.iloc[i]['update_time'])
+					sql_add_items = msSQL.msSQL(connStr)
+					sql_add_items.insert_to_log(query)
 
 			# Define
 
@@ -274,4 +318,4 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 
 	#Updating progres bar
 		# finally:
-		# 	bar.update()
+		# 	 Rest_id = Rest_id + 1

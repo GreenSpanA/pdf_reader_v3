@@ -19,7 +19,6 @@ class msSQL:
 			cursor.fast_executemany
 			connStr.commit()
 			cursor.close()
-			print("Insert into SQL")
 		except (Exception, pyodbc.DatabaseError) as e:
 			print(e)
 			print("SQL ERROR: %s" % query)
