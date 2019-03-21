@@ -21,6 +21,7 @@ from menu_entity import is_separate_price, is_dish_then_price, is_dish_with_pric
 from menu_entity import	get_description_dish_price, get_prices_dish_price
 from menu_entity import cut_prices_form_df, get_items_dish_price, collapse_prices, get_post_prices_dish_price
 from result_DF import get_Result
+from result_DF2 import get_Result_dish_with_price
 
 # Connection string
 connStr = pyodbc.connect("DRIVER={ODBC Driver 13 for SQL Server};"
@@ -170,16 +171,16 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			 # Finding {dishes + prices}
 			items = items.sort_values(['page_num', 'x0', 'y1'], ascending=[True, True, False])
 			items.reset_index(inplace=True, drop=True)
-			dishes_prices = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
+			dishes_prices_flag = pd.DataFrame(columns=['name', 'x0', 'x1', 'y0', 'y1', 'height', 'width', 'page_num'])
 			for i in items.index.values:
 				tmp_e = items.iloc[[i]]
 				e_right = find_closest_right(tmp_e, items, is_same_level=False)
 				if len(e_right) > 0:
 					if is_separate_price(list(e_right['name'])[0]):
-						dishes_prices = dishes_prices.append(tmp_e, ignore_index=True)
+						dishes_prices_flag = dishes_prices_flag.append(tmp_e, ignore_index=True)
 
 			try:
-				Heights_items = pd.crosstab(index=dishes_prices["height"], columns="count")
+				Heights_items = pd.crosstab(index=dishes_prices_flag["height"], columns="count")
 				Heights_items = Heights_items[Heights_items['count'] > min_cat_count]
 				tmp_h = Heights_items[Heights_items['count'] == max(Heights_items['count'])].index.values[0]
 				dishes_prices = items[items['height'].between(0.99 * tmp_h, 1.01 * tmp_h)]
@@ -190,7 +191,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 				dishes_prices = delete_empty_names(dishes_prices)
 				dishes_prices = cut_prices_form_df(dishes_prices)
 			except Exception as e:
-				print("Error! Error with dishes_prices. Count of df is: %s" % len(dishes_prices))
+				print("Error! Without with dishes_prices")
 
 			# Finding {dishes} + {prices}
 			items = items.sort_values(['page_num', 'x0', 'y1'], ascending=[True, True, False])
@@ -211,7 +212,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			# Finding {dishes} or {dishes + prices}
 
 			Is_Dish_With_Price = False
-			if len(dishes_prices) >= len(dishes_and_prices):
+			if len(dishes_prices_flag) >= len(dishes_and_prices):
 				Dishes = dishes_prices
 			else:
 				Dishes = dishes_and_prices
@@ -222,6 +223,7 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 			# CASE: {dish} + {price}
 			#print("Go in CASE:  {dish} + {price}")
 			if (Is_Dish_With_Price == False):
+				print("File %s go to GASE 1" % file_name)
 				tmp_dishes = get_items_dish_price(items)
 				Dishes = tmp_dishes
 				Dishes = cut_prices_form_df(Dishes)
@@ -289,10 +291,53 @@ for folder_input_short in tqdm.tqdm(folder_input_short):
 					sql_add_items = msSQL.msSQL(connStr)
 					sql_add_items.insert_to_log(query)
 
-			# Define
+			# Result for CASE {dish + price}
+			if (Is_Dish_With_Price == True):
+				tmp_Result2 = get_Result_dish_with_price(_Dish=dishes_and_prices, _Items=items,
+														 _filename=file_name, _Vegans=Vegans)
 
+				tmp_Result2['rest_id'] = Rest_id
+				tmp_Result2['file_name'] = file_name
+				tmp_Result2['menu_link'] = None
+				tmp_Result2['rest_name'] = folder_input_short
+				tmp_Result2['update_time'] = time_log
+				tmp_Result2['menu_type'] = file_name
+
+				parsed_items_count = len(tmp_Result2) - sum(tmp_Result2[['item_name']].isnull().sum(axis=1))
+				parsed_items_count = parsed_items_count +\
+									 len(tmp_Result2) - sum(tmp_Result2[['description']].isnull().sum(axis=1))
+
+				parsed_items_count = parsed_items_count + \
+									 len(tmp_Result2) - sum(tmp_Result2[['price']].isnull().sum(axis=1))
+
+				query = "INSERT INTO dbo.pdf_convert_log([time], [file_path], [file_folder], [file_name], " \
+						"[is_picture], [file_size], [page_count],[download_file_time], [algo_number]," \
+						"[is_parsed], [items_count], [parsed_items_count]) " \
+						"values (convert(smalldatetime, '%s', 121), '%s', '%s', '%s', %s,%s,%s,%s,%s,%s,%s,%s)" % (
+							time_log, path_in_str, folder_input_name, file_name, 0, file_size,
+							page_num_max, time_file_down, 2, 1, len(items), parsed_items_count)
+				sql_log2 = msSQL.msSQL(connStr)
+				sql_log2.insert_to_log(query)
+
+				for i in range(0, len(tmp_Result2)):
+					query = "INSERT INTO dbo.menues([item_name], [description],[veg_comment],[price] ,[category], " \
+							"[file_name],[restaurant_name], [menu_type], [int_id] ,[update_time] ) " \
+							"values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', " \
+							"'%s', %s, convert(smalldatetime, '%s', 121))" % (tmp_Result2.iloc[i]['item_name'],
+																			  tmp_Result2.iloc[i]['description'],
+																			  tmp_Result2.iloc[i]['veg_comment'],
+																			  tmp_Result2.iloc[i]['price'],
+																			  tmp_Result2.iloc[i]['category'],
+																			  tmp_Result2.iloc[i]['file_name'],
+																			  tmp_Result2.iloc[i]['rest_name'],
+																			  tmp_Result2.iloc[i]['menu_type'],
+																			  tmp_Result2.iloc[i]['rest_id'],
+																			  tmp_Result2.iloc[i]['update_time'])
+					sql_add_items = msSQL.msSQL(connStr)
+					sql_add_items.insert_to_log(query)
 
 				# Draw layout with categories
+
 			try:
 				path_layout_out = r'%s\%s\%s.pdf' % (setting['path_layout_folder'], folder_input_name, file_name)
 				rect_cat = pdf_rectangle.Rectangle(input_df=Categories, path_output=path_layout_out, pdf_path=path_in_str)
